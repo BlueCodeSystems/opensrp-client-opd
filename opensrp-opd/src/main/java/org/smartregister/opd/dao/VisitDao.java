@@ -4,6 +4,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.smartregister.dao.AbstractDao;
 import org.smartregister.opd.R;
+import org.smartregister.opd.utils.OpdUtils;
 import org.smartregister.opd.domain.HIVStatus;
 import org.smartregister.opd.domain.ProfileAction;
 import org.smartregister.opd.domain.ProfileHistory;
@@ -131,7 +132,7 @@ public class VisitDao extends AbstractDao {
             Date visitCreateDate = new Date(Long.parseLong(getCursorValue(cursor, "created_at")));
             history.setID(getCursorValue(cursor, "form_submission_id"));
             String date = sdfDate.format(visitCreateDate);
-            history.setEventDate(date.equals(todayDate) ? context().getStringResource(R.string.today) : date);
+            history.setEventDate(date.equals(todayDate) ? OpdUtils.getStringResourceSafe(R.string.today, "Today") : date);
             history.setEventTime(sdfTime.format(visitCreateDate));
             history.setEventType(getCursorValue(cursor, "visit_type"));
 
@@ -169,7 +170,7 @@ public class VisitDao extends AbstractDao {
         SimpleDateFormat sdfDate = new SimpleDateFormat(OpdConstants.DateTimeFormat.dd_MMM_yyyy, Locale.ENGLISH);
         String todayDate = sdfDate.format(new Date());
 
-        String sql = "SELECT created_At FROM opd_client_visits where form_submission_id = '" + formSubmissionId + "'";
+        String sql = "SELECT created_at FROM opd_client_visits where form_submission_id = '" + formSubmissionId + "'";
         List<String> returnDate = new ArrayList<>();
 
         DataMap<Void> dataMap = cursor -> {
@@ -177,7 +178,7 @@ public class VisitDao extends AbstractDao {
             Date visitCreateDate = new Date(Long.parseLong(getCursorValue(cursor, "created_at")));
             sdfDate.setTimeZone(TimeZone.getTimeZone("GMT"));
             String date = sdfDate.format(visitCreateDate);
-            returnDate.add(date.equals(todayDate) ? context().getStringResource(R.string.today) : date);
+            returnDate.add(date.equals(todayDate) ? OpdUtils.getStringResourceSafe(R.string.today, "Today") : date);
             return null;
         };
         readData(sql, dataMap);
@@ -251,9 +252,8 @@ public class VisitDao extends AbstractDao {
         return "SELECT visit_id " +
                 "FROM opd_client_visits " +
                 "WHERE base_entity_id = '" + baseEntityId + "' " +
-                "AND visit_type = 'OPD_Diagnosis'" +
+                "AND visit_type = 'OPD_Diagnosis' " +
                 "ORDER BY updated_at DESC " +
                 "LIMIT 1";
     }
 }
-

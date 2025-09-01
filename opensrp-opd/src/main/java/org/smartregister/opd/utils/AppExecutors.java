@@ -49,11 +49,34 @@ public class AppExecutors {
     }
 
     private static class MainThreadExecutor implements Executor {
-        private Handler mainThreadHandler = new Handler(Looper.getMainLooper());
+        private final Handler mainThreadHandler;
+        private final boolean direct;
+
+        MainThreadExecutor() {
+            Handler handler = null;
+            boolean runDirect = false;
+            try {
+                Looper looper = Looper.getMainLooper();
+                if (looper != null) {
+                    handler = new Handler(looper);
+                } else {
+                    runDirect = true;
+                }
+            } catch (RuntimeException e) {
+                // In plain unit tests there is no Android main looper; fall back to direct execution
+                runDirect = true;
+            }
+            this.mainThreadHandler = handler;
+            this.direct = runDirect;
+        }
 
         @Override
         public void execute(@NonNull Runnable command) {
-            mainThreadHandler.post(command);
+            if (direct || mainThreadHandler == null) {
+                command.run();
+            } else {
+                mainThreadHandler.post(command);
+            }
         }
     }
 
@@ -74,4 +97,3 @@ public class AppExecutors {
         }
     }
 }
-

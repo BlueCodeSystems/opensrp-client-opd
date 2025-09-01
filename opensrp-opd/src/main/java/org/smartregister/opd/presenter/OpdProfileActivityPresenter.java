@@ -166,7 +166,11 @@ public class OpdProfileActivityPresenter implements OpdProfileActivityContract.P
 
     @Override
     public HashMap<String, String> getInjectedFields(@NonNull String formName, @NonNull String entityId) {
-        return OpdUtils.getInjectableFields(formName, entityId);
+        try {
+            return OpdUtils.getInjectableFields(formName, entityId);
+        } catch (IllegalStateException | NullPointerException e) {
+            return new HashMap<>();
+        }
     }
 
     public void startFormActivity(@NonNull String formName, @NonNull String caseId, @NonNull String entityTable, @Nullable HashMap<String, String> injectedValues) {

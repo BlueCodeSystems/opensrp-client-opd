@@ -98,14 +98,13 @@ public class OpdMiniClientProcessorForJava extends ClientProcessorForJava {
     }
 
     public void processEventClient(@NonNull EventClient eventClient, @NonNull List<Event> unsyncEvents, @Nullable ClientClassification clientClassification) throws Exception {
-        Object rawEvent = null;
-        try {
-            rawEvent = eventClient.getClass().getMethod("getEvent").invoke(eventClient);
-        } catch (Exception ignore) { }
-        JSONObject eventJsonObj = new JSONObject(JsonFormUtils.gson.toJson(rawEvent));
-        Event event = OpdLibrary.getInstance().getEcSyncHelper().convert(eventJsonObj, Event.class);
+        Event event = extractDomainEvent(eventClient);
 
         if (event.getEventType().equals(OpdConstants.EventType.CHECK_IN)) {
+            // Ensure the referenced client exists for CHECK_IN events
+            if (eventClient.getClient() == null) {
+                throw new CheckInEventProcessException(String.format("Could not process this OPD Check-In Event because Client %s referenced by OPD Check-In event does not exist", event.getBaseEntityId()));
+            }
             processCheckIn(eventClient, clientClassification);
             CoreLibrary.getInstance().context().getEventClientRepository().markEventAsProcessed(event.getFormSubmissionId());
         } else if (event.getEventType().equals(OpdConstants.EventType.TEST_CONDUCTED)) {
@@ -159,16 +158,13 @@ public class OpdMiniClientProcessorForJava extends ClientProcessorForJava {
     }
 
     private void processDeathEvent(@NonNull EventClient eventClient) {
-        Object rawEvent = null;
-        try { rawEvent = eventClient.getClass().getMethod("getEvent").invoke(eventClient); } catch (Exception ignore) {}
-        JSONObject eventJsonObj;
+        Event event;
         try {
-            eventJsonObj = new JSONObject(JsonFormUtils.gson.toJson(rawEvent));
+            event = extractDomainEvent(eventClient);
         } catch (JSONException e) {
             Timber.e(e);
             return;
         }
-        Event event = OpdLibrary.getInstance().getEcSyncHelper().convert(eventJsonObj, Event.class);
         String entityId = event.getBaseEntityId();
 
         HashMap<String, String> keyValues = new HashMap<>();
@@ -211,10 +207,7 @@ public class OpdMiniClientProcessorForJava extends ClientProcessorForJava {
     }
 
     private void processTreatment(@NonNull EventClient eventClient) throws JSONException {
-        Object rawEvent2 = null;
-        try { rawEvent2 = eventClient.getClass().getMethod("getEvent").invoke(eventClient); } catch (Exception ignore) {}
-        JSONObject eventJsonObj = new JSONObject(JsonFormUtils.gson.toJson(rawEvent2));
-        Event event = OpdLibrary.getInstance().getEcSyncHelper().convert(eventJsonObj, Event.class);
+        Event event = extractDomainEvent(eventClient);
         Map<String, String> mapDetails = event.getDetails();
         HashMap<String, String> keyValues = new HashMap<>();
         generateKeyValuesFromEvent(event, keyValues);
@@ -281,9 +274,7 @@ public class OpdMiniClientProcessorForJava extends ClientProcessorForJava {
     }
 
     private void processDiagnosis(@NonNull EventClient eventClient) throws JSONException {
-        Object rawEvent3 = null; try { rawEvent3 = eventClient.getClass().getMethod("getEvent").invoke(eventClient); } catch (Exception ignore) {}
-        JSONObject eventJsonObj = new JSONObject(JsonFormUtils.gson.toJson(rawEvent3));
-        Event event = OpdLibrary.getInstance().getEcSyncHelper().convert(eventJsonObj, Event.class);
+        Event event = extractDomainEvent(eventClient);
         Map<String, String> mapDetails = event.getDetails();
         String visitId = mapDetails.get(OpdConstants.JSON_FORM_KEY.VISIT_ID);
 
@@ -340,15 +331,13 @@ public class OpdMiniClientProcessorForJava extends ClientProcessorForJava {
     }
 
     private void processTestConducted(@NonNull EventClient eventClient) {
-        Object rawEvent4 = null; try { rawEvent4 = eventClient.getClass().getMethod("getEvent").invoke(eventClient); } catch (Exception ignore) {}
-        JSONObject eventJsonObj;
+        Event event;
         try {
-            eventJsonObj = new JSONObject(JsonFormUtils.gson.toJson(rawEvent4));
+            event = extractDomainEvent(eventClient);
         } catch (JSONException e) {
             Timber.e(e);
             return;
         }
-        Event event = OpdLibrary.getInstance().getEcSyncHelper().convert(eventJsonObj, Event.class);
         Map<String, String> mapDetails = event.getDetails();
 
         HashMap<String, String> keyValues = new HashMap<>();
@@ -381,7 +370,7 @@ public class OpdMiniClientProcessorForJava extends ClientProcessorForJava {
                             opdTestConducted.setTestName(testsMapEntry.getKey());
                             opdTestConducted.setVisitId(mapDetails.get(OpdConstants.JSON_FORM_KEY.VISIT_ID));
                             opdTestConducted.setBaseEntityId(event.getBaseEntityId());
-        opdTestConducted.setCreatedAt(OpdUtils.convertDate(event.getEventDate().toDate(), OpdDbConstants.DATE_FORMAT));
+                            opdTestConducted.setCreatedAt(OpdUtils.convertDate(event.getEventDate().toDate(), OpdDbConstants.DATE_FORMAT));
                             boolean result = OpdLibrary.getInstance().getOpdTestConductedRepository().save(opdTestConducted);
                             if (result) {
                                 Timber.i("Opd processTestConducted for %s saved", event.getBaseEntityId());
@@ -400,15 +389,13 @@ public class OpdMiniClientProcessorForJava extends ClientProcessorForJava {
     protected void processCheckIn(@NonNull EventClient eventClient, @NonNull ClientClassification clientClassification) throws
             CheckInEventProcessException {
         HashMap<String, String> keyValues = new HashMap<>();
-        Object rawEvent5 = null; try { rawEvent5 = eventClient.getClass().getMethod("getEvent").invoke(eventClient); } catch (Exception ignore) {}
-        JSONObject eventJsonObj2;
+        Event event;
         try {
-            eventJsonObj2 = new JSONObject(JsonFormUtils.gson.toJson(rawEvent5));
+            event = extractDomainEvent(eventClient);
         } catch (JSONException e) {
             Timber.e(e);
             throw new CheckInEventProcessException("Failed to parse check-in event JSON");
         }
-        Event event = OpdLibrary.getInstance().getEcSyncHelper().convert(eventJsonObj2, Event.class);
         // Todo: This might not work as expected when openmrs_entity_ids are added
         generateKeyValuesFromEvent(event, keyValues);
 
@@ -433,7 +420,7 @@ public class OpdMiniClientProcessorForJava extends ClientProcessorForJava {
             boolean saved = saveVisit(event.getBaseEntityId(), event.getLocationId(), event.getProviderId(), visitId, visitDate);
             if (!saved) {
                 abortTransaction();
-                throw new CheckInEventProcessException(String.format("Visit with id %s could not be saved in the db. Fail operation failed", visitId));
+                throw new CheckInEventProcessException(String.format("Could not process this OPD Check-In Event because Visit with id %s could not be saved in the db. Fail operation failed", visitId));
             }
 
             // Skip forwarding to base processEvent to avoid type model mismatches
@@ -460,6 +447,21 @@ public class OpdMiniClientProcessorForJava extends ClientProcessorForJava {
             commitSuccessfulTransaction();
         } else {
             throw new CheckInEventProcessException(String.format("Check-in of event %s could not be processed because it the visitDate OR visitId is null", new Gson().toJson(event)));
+        }
+    }
+
+    private Event extractDomainEvent(@NonNull EventClient eventClient) throws JSONException {
+        try {
+            Object raw = eventClient.getClass().getMethod("getEvent").invoke(eventClient);
+            if (raw instanceof Event) {
+                return (Event) raw;
+            }
+            JSONObject eventJsonObj = new JSONObject(JsonFormUtils.gson.toJson(raw));
+            return OpdLibrary.getInstance().getEcSyncHelper().convert(eventJsonObj, Event.class);
+        } catch (ReflectiveOperationException e) {
+            Timber.e(e);
+            JSONObject eventJsonObj = new JSONObject(JsonFormUtils.gson.toJson(eventClient));
+            return OpdLibrary.getInstance().getEcSyncHelper().convert(eventJsonObj, Event.class);
         }
     }
 

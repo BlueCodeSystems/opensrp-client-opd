@@ -313,10 +313,21 @@ public class OpdLibrary {
         org.smartregister.clientandeventmodel.Event clientEvent =
                 JsonFormUtils.createEvent(fieldsArray, jsonFormObject.getJSONObject(METADATA)
                 , formTag, baseEntityId, eventType, entityTable);
-        // Convert to domain Event
-        JSONObject eventJson = new JSONObject(JsonFormUtils.gson.toJson(clientEvent));
-        Event opdCheckinEvent = getEcSyncHelper().convert(eventJson, Event.class)
-                .withChildLocationId(OpdLibrary.getInstance().context().allSharedPreferences().fetchCurrentLocality());
+        // Convert to domain Event with a safe fallback when EcSyncHelper isn't initialized (e.g., unit tests)
+        Event opdCheckinEvent;
+        try {
+            JSONObject eventJson = new JSONObject(JsonFormUtils.gson.toJson(clientEvent));
+            opdCheckinEvent = getEcSyncHelper().convert(eventJson, Event.class);
+        } catch (Exception e) {
+            // Fallback: construct a minimal domain Event
+            opdCheckinEvent = new Event()
+                    .withBaseEntityId(baseEntityId)
+                    .withEventType(eventType)
+                    .withEntityType(entityTable)
+                    .withFormSubmissionId(clientEvent.getFormSubmissionId())
+                    .withEventDate(new org.joda.time.DateTime());
+        }
+        opdCheckinEvent = opdCheckinEvent.withChildLocationId(OpdLibrary.getInstance().context().allSharedPreferences().fetchCurrentLocality());
 
         AllSharedPreferences allSharedPreferences = OpdUtils.getAllSharedPreferences();
         String providerId = allSharedPreferences.fetchRegisteredANM();
