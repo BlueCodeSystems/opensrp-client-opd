@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Only keep IDs not provided by client-core -->
+    <item type="id" name="action_save"/>
+    <item type="id" name="container"/>
+    <!-- Add placeholders for IDs used by this module -->
+    <item type="id" name="action_search"/>
+    <item type="id" name="opensrp_logo_image_view"/>
+    <item type="id" name="txt_title_label"/>
+    <item type="id" name="register_nav_bar_container"/>
+    <item type="id" name="top_left_layout"/>
+    <item type="id" name="top_right_layout"/>
+    <item type="id" name="register_sort_filter_bar_layout"/>
+    <item type="id" name="filter_sort_layout"/>
+    <item type="id" name="due_only_layout"/>
+    <item type="id" name="due_only_text_view"/>
+</resources>

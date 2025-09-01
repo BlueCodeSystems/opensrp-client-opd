@@ -106,5 +106,14 @@
     <string name="view">VIEW</string>
     <string name="err_read_only_form">Cannot save a read-only form</string>
 
+    <!-- Added common strings used in code -->
+    <string name="an_error_occured">An error occurred</string>
+    <string name="sync_complete">Sync complete</string>
+    <string name="due_only">Due only</string>
+    <string name="confirm_form_close">Close form?</string>
+    <string name="confirm_form_close_explanation">Unsaved changes will be lost.</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+
 
 </resources>

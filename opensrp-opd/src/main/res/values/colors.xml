@@ -24,4 +24,14 @@
 
     <color name="register_switch_btn_bg_color">#191919</color>
 
+    <!-- Added common colors used by code/layouts -->
+    <color name="primary">#3F51B5</color>
+    <color name="primary_dark">#303F9F</color>
+    <color name="accent">#FF4081</color>
+    <color name="opensrp_accent">#FF4081</color>
+    <color name="primary_text">#212121</color>
+    <color name="white">#FFFFFF</color>
+    <color name="text_black">#212121</color>
+    <color name="light_grey">#BDBDBD</color>
+
 </resources>
