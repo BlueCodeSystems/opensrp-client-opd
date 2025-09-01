@@ -19,7 +19,7 @@ import org.robolectric.annotation.Config;
 import org.robolectric.util.ReflectionHelpers;
 import org.smartregister.Context;
 import org.smartregister.CoreLibrary;
-import org.smartregister.clientandeventmodel.Event;
+import org.smartregister.domain.Event;
 import org.smartregister.opd.configuration.OpdConfiguration;
 import org.smartregister.opd.shadows.ShadowOpdLibrary;
 import org.smartregister.opd.utils.OpdConstants;
