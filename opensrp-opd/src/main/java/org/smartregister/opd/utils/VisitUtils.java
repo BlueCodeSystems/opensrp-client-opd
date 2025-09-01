@@ -50,7 +50,7 @@ public class VisitUtils {
         Visit visit = new Visit();
         visit.setVisitId(event.getFormSubmissionId());
         visit.setBaseEntityId(event.getBaseEntityId());
-        visit.setDate(event.getEventDate().toDate());
+        visit.setDate(event.getEventDate() != null ? event.getEventDate().toDate() : null);
         visit.setVisitType(event.getEventType());
         visit.setEventId(event.getEventId());
         visit.setFormSubmissionId(event.getFormSubmissionId());
@@ -58,7 +58,7 @@ public class VisitUtils {
         visit.setLocationId(event.getLocationId());
         visit.setCreatedAt(event.getDateCreated() != null ? event.getDateCreated().toDate() : new Date());
         visit.setUpdatedAt(event.getDateEdited() != null ? event.getDateEdited().toDate() : visit.getCreatedAt());
-        visit.setVisitGroup(sdf.format(event.getEventDate().toDate()));
+        visit.setVisitGroup(event.getEventDate() != null ? sdf.format(event.getEventDate().toDate()) : null);
 
         Map<String, List<VisitDetail>> details = new HashMap<>();
         if (event.getObs() != null) {

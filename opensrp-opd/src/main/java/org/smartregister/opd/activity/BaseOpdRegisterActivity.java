@@ -112,25 +112,7 @@ public abstract class BaseOpdRegisterActivity extends BaseRegisterActivity imple
         OpdMetadata opdMetadata = OpdLibrary.getInstance().getOpdConfiguration().getOpdMetadata();
         if (opdMetadata != null) {
             Intent intent = new Intent(this, opdMetadata.getOpdFormActivity());
-            Form form = new Form();
-            form.setWizard(false);
-            form.setName("");
-
-            String encounterType = jsonForm.optString(OpdJsonFormUtils.ENCOUNTER_TYPE);
-
-            if (encounterType.equals(OpdConstants.EventType.DIAGNOSIS_AND_TREAT)) {
-                form.setName(OpdConstants.EventType.DIAGNOSIS_AND_TREAT);
-                form.setWizard(true);
-            }
-
-            form.setHideSaveLabel(true);
-            form.setPreviousLabel("");
-            form.setNextLabel("");
-            form.setHideNextButton(false);
-            form.setHidePreviousButton(false);
-
             intent.putExtra(OpdConstants.JSON_FORM_EXTRA.JSON, jsonForm.toString());
-            intent.putExtra(JsonFormConstants.JSON_FORM_KEY.FORM, form);
             if (parcelableData != null) {
                 for (String intentKey : parcelableData.keySet()) {
                     intent.putExtra(intentKey, parcelableData.get(intentKey));

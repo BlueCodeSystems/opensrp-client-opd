@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.smartregister.CoreLibrary;
-import org.smartregister.clientandeventmodel.Event;
+import org.smartregister.domain.Event;
 import org.smartregister.opd.OpdLibrary;
 import org.smartregister.opd.listener.OpdEventActionCallBack;
 import org.smartregister.util.JsonFormUtils;

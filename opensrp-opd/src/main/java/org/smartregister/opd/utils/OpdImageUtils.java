@@ -5,6 +5,6 @@ import org.smartregister.opd.R;
 public class OpdImageUtils {
 
     public static int getProfileImageResourceIdentifier() {
-        return R.drawable.avatar_woman;
+        return R.drawable.avatar_man;
     }
 }

@@ -3,7 +3,7 @@ package org.smartregister.opd.pojo;
 import androidx.annotation.NonNull;
 
 import org.smartregister.clientandeventmodel.Client;
-import org.smartregister.clientandeventmodel.Event;
+import org.smartregister.domain.Event;
 
 public class OpdEventClient {
 

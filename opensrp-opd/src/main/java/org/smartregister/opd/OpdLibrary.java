@@ -13,7 +13,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.smartregister.Context;
 import org.smartregister.CoreLibrary;
-import org.smartregister.clientandeventmodel.Event;
+import org.smartregister.domain.Event;
 import org.smartregister.domain.tag.FormTag;
 import org.smartregister.opd.configuration.OpdConfiguration;
 import org.smartregister.opd.configuration.OpdFormProcessor;
@@ -310,8 +310,12 @@ public class OpdLibrary {
 
         String baseEntityId = OpdUtils.getIntentValue(data, OpdConstants.IntentKey.BASE_ENTITY_ID);
         String entityTable = OpdUtils.getIntentValue(data, OpdConstants.IntentKey.ENTITY_TABLE);
-        Event opdCheckinEvent = OpdJsonFormUtils.createEvent(fieldsArray, jsonFormObject.getJSONObject(METADATA)
-                , formTag, baseEntityId, eventType, entityTable)
+        org.smartregister.clientandeventmodel.Event clientEvent =
+                JsonFormUtils.createEvent(fieldsArray, jsonFormObject.getJSONObject(METADATA)
+                , formTag, baseEntityId, eventType, entityTable);
+        // Convert to domain Event
+        JSONObject eventJson = new JSONObject(JsonFormUtils.gson.toJson(clientEvent));
+        Event opdCheckinEvent = getEcSyncHelper().convert(eventJson, Event.class)
                 .withChildLocationId(OpdLibrary.getInstance().context().allSharedPreferences().fetchCurrentLocality());
 
         AllSharedPreferences allSharedPreferences = OpdUtils.getAllSharedPreferences();

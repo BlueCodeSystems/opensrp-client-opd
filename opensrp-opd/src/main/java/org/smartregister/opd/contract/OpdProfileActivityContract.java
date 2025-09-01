@@ -7,7 +7,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 
 import org.json.JSONObject;
-import org.smartregister.clientandeventmodel.Event;
+import org.smartregister.domain.Event;
 import org.smartregister.commonregistry.CommonPersonObjectClient;
 import org.smartregister.domain.tag.FormTag;
 import org.smartregister.opd.listener.OnSendActionToFragment;

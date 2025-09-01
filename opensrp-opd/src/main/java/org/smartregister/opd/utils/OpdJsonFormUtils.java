@@ -18,7 +18,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.smartregister.clientandeventmodel.Client;
-import org.smartregister.clientandeventmodel.Event;
+import org.smartregister.domain.Event;
 import org.smartregister.clientandeventmodel.FormEntityConstants;
 import org.smartregister.commonregistry.CommonPersonObjectClient;
 import org.smartregister.domain.ProfileImage;
@@ -474,8 +474,12 @@ public class OpdJsonFormUtils extends JsonFormUtils {
 
             Client baseClient = JsonFormUtils.createBaseClient(fields, formTag, entityId);
 
-            Event baseEvent = JsonFormUtils.createEvent(fields, getJSONObject(jsonForm, METADATA),
+            org.smartregister.clientandeventmodel.Event clientEvent = JsonFormUtils.createEvent(fields, getJSONObject(jsonForm, METADATA),
                     formTag, entityId, jsonForm.optString(OpdJsonFormUtils.ENCOUNTER_TYPE), OpdUtils.metadata().getTableName());
+
+            // Convert to domain Event
+            JSONObject eventJsonObj = new JSONObject(gson.toJson(clientEvent));
+            Event baseEvent = OpdLibrary.getInstance().getEcSyncHelper().convert(eventJsonObj, Event.class);
 
             tagSyncMetadata(baseEvent);
 

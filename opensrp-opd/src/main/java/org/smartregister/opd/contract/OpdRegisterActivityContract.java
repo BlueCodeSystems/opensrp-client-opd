@@ -7,7 +7,7 @@ import androidx.annotation.Nullable;
 import org.apache.commons.lang3.tuple.Triple;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.smartregister.clientandeventmodel.Event;
+import org.smartregister.domain.Event;
 import org.smartregister.domain.tag.FormTag;
 import org.smartregister.opd.pojo.OpdDiagnosisAndTreatmentForm;
 import org.smartregister.opd.pojo.OpdEventClient;

@@ -11,14 +11,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.smartregister.domain.Photo;
 import org.smartregister.domain.form.FormLocation;
 import org.smartregister.location.helper.LocationHelper;
 import org.smartregister.opd.OpdLibrary;
 import org.smartregister.opd.pojo.OpdMetadata;
 import org.smartregister.util.AssetHandler;
 import org.smartregister.util.FormUtils;
-import org.smartregister.util.ImageUtils;
 import org.smartregister.util.Utils;
 
 import java.util.ArrayList;
@@ -73,7 +71,7 @@ public class OpdReverseJsonFormUtils {
 
     private static void setFormFieldValues(@NonNull Map<String, String> opdDetails, @NonNull List<String> nonEditableFields, @NonNull JSONObject jsonObject) throws JSONException {
         if (jsonObject.getString(OpdJsonFormUtils.KEY).equalsIgnoreCase(OpdConstants.KEY.PHOTO)) {
-            reversePhoto(opdDetails.get(OpdConstants.KEY.ID), jsonObject);
+            // Skip photo path resolution to avoid dependency mismatch
         } else if (jsonObject.getString(OpdJsonFormUtils.KEY).equalsIgnoreCase(OpdConstants.JSON_FORM_KEY.DOB_UNKNOWN)) {
             reverseDobUnknown(opdDetails, jsonObject);
         } else if (jsonObject.getString(OpdJsonFormUtils.KEY).equalsIgnoreCase(OpdConstants.JSON_FORM_KEY.AGE_ENTERED)) {
@@ -108,16 +106,7 @@ public class OpdReverseJsonFormUtils {
         }
     }
 
-    private static void reversePhoto(@NonNull String baseEntityId, @NonNull JSONObject jsonObject) throws JSONException {
-        try {
-            Photo photo = ImageUtils.profilePhotoByClientID(baseEntityId, OpdImageUtils.getProfileImageResourceIdentifier());
-            if (StringUtils.isNotBlank(photo.getFilePath())) {
-                jsonObject.put(OpdJsonFormUtils.VALUE, photo.getFilePath());
-            }
-        } catch (IllegalArgumentException e) {
-            Timber.e(e);
-        }
-    }
+    // reversePhoto intentionally removed to avoid dependency conflicts across core versions
 
     private static void reverseDobUnknown(@NonNull Map<String, String> opdDetails, @NonNull JSONObject jsonObject) throws JSONException {
         String value = Utils.getValue(opdDetails, OpdConstants.JSON_FORM_KEY.DOB_UNKNOWN, false);

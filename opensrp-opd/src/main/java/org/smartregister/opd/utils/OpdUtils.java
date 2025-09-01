@@ -31,13 +31,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.smartregister.AllConstants;
 import org.smartregister.NativeFormFieldProcessor;
-import org.smartregister.clientandeventmodel.Obs;
 import org.smartregister.opd.OpdLibrary;
 import org.smartregister.opd.domain.ProfileHistory;
 import org.smartregister.opd.pojo.OpdMetadata;
 import org.smartregister.util.FormUtils;
 import org.smartregister.util.JsonFormUtils;
 import org.smartregister.util.Utils;
+import org.smartregister.clientandeventmodel.Obs;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -202,20 +202,6 @@ public class OpdUtils extends Utils {
     public static Intent buildFormActivityIntent(JSONObject jsonForm, HashMap<String, String> parcelableData, Context context) {
         Intent intent = new Intent(context, OpdLibrary.getInstance().getOpdConfiguration().getOpdMetadata().getOpdFormActivity());
         intent.putExtra(OpdConstants.JSON_FORM_EXTRA.JSON, jsonForm.toString());
-        Form form = new Form();
-        form.setWizard(false);
-        form.setName("");
-        String encounterType = jsonForm.optString(OpdJsonFormUtils.ENCOUNTER_TYPE);
-        if (encounterType.equals(OpdConstants.EventType.DIAGNOSIS_AND_TREAT)) {
-            form.setName(OpdConstants.EventType.DIAGNOSIS_AND_TREAT);
-            form.setWizard(true);
-        }
-        form.setHideSaveLabel(true);
-        form.setPreviousLabel("");
-        form.setNextLabel("");
-        form.setHideNextButton(false);
-        form.setHidePreviousButton(false);
-        intent.putExtra(JsonFormConstants.JSON_FORM_KEY.FORM, form);
 
         if (parcelableData != null) {
             for (String intentKey : parcelableData.keySet()) {

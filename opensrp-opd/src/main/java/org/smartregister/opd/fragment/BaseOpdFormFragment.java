@@ -62,11 +62,7 @@ public class BaseOpdFormFragment extends JsonWizardFormFragment implements Clien
         return jsonFormFragment;
     }
 
-    @Nullable
-    private Form getForm() {
-        return this.getActivity() != null && this.getActivity() instanceof JsonFormActivity ?
-                ((JsonFormActivity) this.getActivity()).getForm() : null;
-    }
+    // Avoid direct dependency on JsonForm Form type to maintain compatibility
 
     public OpdFormFragmentPresenter getPresenter() {
         return presenter;
@@ -75,11 +71,8 @@ public class BaseOpdFormFragment extends JsonWizardFormFragment implements Clien
     @Override
     public void updateVisibilityOfNextAndSave(boolean next, boolean save) {
         super.updateVisibilityOfNextAndSave(next, save);
-        Form form = getForm();
         OpdMetadata opdMetadata = OpdLibrary.getInstance().getOpdConfiguration().getOpdMetadata();
-
-        if (form != null && form.isWizard() && opdMetadata != null
-                && !opdMetadata.isFormWizardValidateRequiredFieldsBefore()) {
+        if (opdMetadata != null && !opdMetadata.isFormWizardValidateRequiredFieldsBefore()) {
             this.getMenu().findItem(R.id.action_save).setVisible(save);
         }
     }
@@ -145,12 +138,12 @@ public class BaseOpdFormFragment extends JsonWizardFormFragment implements Clien
         snackbarView.setMinimumHeight(Float.valueOf(textSize).intValue());
         snackbarView.setBackgroundResource(R.color.accent);
 
-        final Button actionView = snackbarView.findViewById(R.id.snackbar_action);
+        final Button actionView = snackbarView.findViewById(com.google.android.material.R.id.snackbar_action);
         actionView.setTextSize(TypedValue.COMPLEX_UNIT_PX, textSize);
         actionView.setGravity(Gravity.CENTER);
         actionView.setTextColor(getResources().getColor(R.color.white));
 
-        TextView textView = snackbarView.findViewById(R.id.snackbar_text);
+        TextView textView = snackbarView.findViewById(com.google.android.material.R.id.snackbar_text);
         textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, textSize);
         textView.setGravity(Gravity.CENTER);
         textView.setOnClickListener(new View.OnClickListener() {

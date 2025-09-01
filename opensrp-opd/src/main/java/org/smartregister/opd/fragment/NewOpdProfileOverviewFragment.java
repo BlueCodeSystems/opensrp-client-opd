@@ -251,10 +251,6 @@ public class NewOpdProfileOverviewFragment extends BaseListFragment<ProfileActio
     @Override
     public void startJsonForm(JSONObject jsonObject) {
         Form form = new Form();
-        form.setWizard(false);
-        form.setHideSaveLabel(true);
-        form.setNextLabel("");
-
         getHostFormProcessor().startForm(jsonObject, form, this);
     }
 

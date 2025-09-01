@@ -10,7 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.smartregister.clientandeventmodel.Event;
+import org.smartregister.domain.Event;
 import org.smartregister.domain.tag.FormTag;
 import org.smartregister.opd.OpdLibrary;
 import org.smartregister.opd.configuration.OpdFormProcessor;
@@ -99,8 +99,12 @@ public class OpdDiagnoseAndTreatFormProcessor implements OpdFormProcessor<List<E
                         }
                     }
 
-                    Event baseEvent = JsonFormUtils.createEvent(fields, jsonFormObject.optJSONObject(METADATA),
+                    org.smartregister.clientandeventmodel.Event clientEvent = JsonFormUtils.createEvent(fields, jsonFormObject.optJSONObject(METADATA),
                             formTag, entityId, stepEncounterType, bindType);
+
+                    // Convert to domain Event for standardization
+                    JSONObject eventJsonObj = new JSONObject(gson.toJson(clientEvent));
+                    Event baseEvent = OpdLibrary.getInstance().getEcSyncHelper().convert(eventJsonObj, Event.class);
 
                     OpdJsonFormUtils.tagSyncMetadata(baseEvent);
 
@@ -115,8 +119,10 @@ public class OpdDiagnoseAndTreatFormProcessor implements OpdFormProcessor<List<E
                 OpdDiagnosisAndTreatmentForm opdDiagnosisAndTreatmentForm = new OpdDiagnosisAndTreatmentForm(entityId);
                 OpdLibrary.getInstance().getOpdDiagnosisAndTreatmentFormRepository().delete(opdDiagnosisAndTreatmentForm);
 
-                Event closeOpdVisit = JsonFormUtils.createEvent(new JSONArray(), new JSONObject(),
+                org.smartregister.clientandeventmodel.Event clientCloseEvent = JsonFormUtils.createEvent(new JSONArray(), new JSONObject(),
                         formTag, entityId, OpdConstants.EventType.CLOSE_OPD_VISIT, "");
+                JSONObject closeJson = new JSONObject(gson.toJson(clientCloseEvent));
+                Event closeOpdVisit = OpdLibrary.getInstance().getEcSyncHelper().convert(closeJson, Event.class);
 
                 OpdJsonFormUtils.tagSyncMetadata(closeOpdVisit);
                 closeOpdVisit.addDetails(OpdConstants.JSON_FORM_KEY.VISIT_ID, visitId);

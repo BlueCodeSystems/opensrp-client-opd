@@ -12,7 +12,7 @@ import com.vijay.jsonwizard.domain.Form;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.smartregister.AllConstants;
-import org.smartregister.clientandeventmodel.Event;
+import org.smartregister.domain.Event;
 import org.smartregister.commonregistry.CommonPersonObjectClient;
 import org.smartregister.domain.tag.FormTag;
 import org.smartregister.opd.OpdLibrary;
@@ -150,7 +150,7 @@ public class OpdProfileActivityPresenter implements OpdProfileActivityContract.P
 
             profileView.setProfileID(Utils.getValue(client, OpdDbConstants.KEY.REGISTER_ID, false));
 
-            int defaultImage = gender.equalsIgnoreCase("Male") ? R.drawable.avatar_man : R.drawable.avatar_woman;
+            int defaultImage = R.drawable.avatar_man;
             profileView.setProfileImage(Utils.getValue(client, OpdDbConstants.KEY.ID, false), defaultImage);
         }
     }
@@ -270,11 +270,7 @@ public class OpdProfileActivityPresenter implements OpdProfileActivityContract.P
                 if (profileView != null && metadata != null && jsonForm != null) {
                     Context context = profileView.getContext();
                     Intent intent = new Intent(context, metadata.getOpdFormActivity());
-                    Form formParam = new Form();
-                    formParam.setWizard(false);
-                    formParam.setHideSaveLabel(true);
-                    formParam.setNextLabel("");
-                    intent.putExtra(JsonFormConstants.JSON_FORM_KEY.FORM, formParam);
+                    // Pass only JSON; current jsonwizard derives form config internally
                     intent.putExtra(JsonFormConstants.JSON_FORM_KEY.JSON, jsonForm);
                     profileView.startActivityForResult(intent, OpdJsonFormUtils.REQUEST_CODE_GET_JSON);
                 }
