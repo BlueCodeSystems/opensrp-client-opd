@@ -2,20 +2,15 @@ apply plugin: 'com.android.application'
 apply plugin: 'org.smartregister.gradle.jarjar'
 
 android {
-    compileSdkVersion 28
+    compileSdk 34
     defaultConfig {
         applicationId "org.smartregister.opd.sample"
-        minSdkVersion 18
-        targetSdkVersion 28
+        minSdk 18
+        targetSdk 34
         versionCode 1
         versionName "1.0"
         multiDexEnabled true
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
-        javaCompileOptions {
-            annotationProcessorOptions {
-                includeCompileClasspath = true
-            }
-        }
         if (project.rootProject.file("local.properties").exists()) {
 
             Properties properties = new Properties()
@@ -81,20 +76,32 @@ android {
         }
     }
 
+    buildFeatures {
+        buildConfig true
+    }
+
     compileOptions {
         sourceCompatibility 1.8
         targetCompatibility 1.8
     }
 
-    lintOptions.abortOnError false
-
-    packagingOptions {
-        exclude 'META-INF/LICENSE.md'
-        exclude 'META-INF/NOTICE.md'
-        exclude 'META-INF/DEPENDENCIES'
-        exclude 'META-INF/INDEX.LIST'
-        exclude 'META-INF/INDEX'
+    lint {
+        abortOnError false
     }
+
+    packaging {
+        resources {
+            excludes += [
+                'META-INF/LICENSE.md',
+                'META-INF/NOTICE.md',
+                'META-INF/DEPENDENCIES',
+                'META-INF/INDEX.LIST',
+                'META-INF/INDEX'
+            ]
+        }
+    }
+
+    namespace "org.smartregister.opd.sample"
 }
 
 dependencies {
@@ -118,11 +125,12 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.0.0'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
-    androidTestImplementation('androidx.test.espresso:espresso-core:3.1.0') {
+    androidTestImplementation('androidx.test.espresso:espresso-core:3.5.1') {
         exclude group: 'com.android.support', module: 'support-annotations'
         exclude group: 'junit', module: 'junit'
         exclude group: 'com.google.code.findbugs'
     }
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     implementation 'androidx.recyclerview:recyclerview:1.0.0'
 
 }
