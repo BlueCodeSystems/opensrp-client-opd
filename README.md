@@ -34,7 +34,7 @@ Add the module to your project as follows
  
      ...
  
-     implementation 'org.smartregister:opensrp-client-opd:0.0.1-SNAPSHOT'
+     implementation 'io.github.bluecodesystems:opensrp-client-opd:0.2.0'
  }
  ```
 
