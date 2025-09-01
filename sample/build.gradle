@@ -5,7 +5,7 @@ android {
     compileSdk 34
     defaultConfig {
         applicationId "org.smartregister.opd.sample"
-        minSdk 18
+        minSdk 24
         targetSdk 34
         versionCode 1
         versionName "1.0"
