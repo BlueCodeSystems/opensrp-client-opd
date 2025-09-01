@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({OpdLibrary.class, LocationHelper.class, CoreLibrary.class, ImageUtils.class})
+@PrepareForTest({OpdLibrary.class, LocationHelper.class, CoreLibrary.class, ImageUtils.class, OpdJsonFormUtils.class, OpdUtils.class, android.text.TextUtils.class})
 public class OpdReverseJsonFormUtilsTest {
 
     @Mock
@@ -106,8 +106,16 @@ public class OpdReverseJsonFormUtilsTest {
     }
 
     @Test
-    public void testPrepareJsonEditOpdRegFormShouldPrefillJsonFormCorrectly() throws JSONException {
+    public void testPrepareJsonEditOpdRegFormShouldPrefillJsonFormCorrectly() throws Exception {
+        // Mock TextUtils.isEmpty()
+        PowerMockito.mockStatic(android.text.TextUtils.class);
+        PowerMockito.when(android.text.TextUtils.isEmpty(Mockito.anyString())).thenAnswer(invocation -> {
+            String str = invocation.getArgument(0);
+            return str == null || str.trim().isEmpty();
+        });
+        
         PowerMockito.mockStatic(OpdLibrary.class);
+        PowerMockito.mockStatic(OpdUtils.class);
         PowerMockito.mockStatic(LocationHelper.class);
         PowerMockito.mockStatic(CoreLibrary.class);
         PowerMockito.mockStatic(ImageUtils.class);
@@ -125,6 +133,7 @@ public class OpdReverseJsonFormUtilsTest {
                 OpdConstants.CONFIG, BaseOpdFormActivity.class, BaseOpdProfileActivity.class, true);
 
         PowerMockito.when(opdConfiguration.getOpdMetadata()).thenReturn(opdMetadata);
+        PowerMockito.when(OpdUtils.metadata()).thenReturn(opdMetadata);
 
         Map<String, String> detailsMap = new HashMap<>();
         detailsMap.put(OpdJsonFormUtils.OPENSRP_ID, "123");
@@ -477,6 +486,11 @@ public class OpdReverseJsonFormUtilsTest {
                 "}";
         JSONObject opdRegistrationFormJsonObject = new JSONObject(opdRegistrationForm);
         Mockito.when(formUtils.getFormJson(OpdConstants.JSON_FORM_KEY.NAME)).thenReturn(opdRegistrationFormJsonObject);
+        // Stub location helper defaults used by addRegLocHierarchyQuestions
+        PowerMockito.mockStatic(OpdJsonFormUtils.class);
+        PowerMockito.doNothing().when(OpdJsonFormUtils.class, "addRegLocHierarchyQuestions", Mockito.any(JSONObject.class));
+        Mockito.doReturn(new ArrayList<String>()).when(locationHelper).generateDefaultLocationHierarchy(Mockito.anyList());
+        Mockito.doReturn(new ArrayList<FormLocation>()).when(locationHelper).generateLocationHierarchyTree(Mockito.anyBoolean(), Mockito.anyList());
         String jsonForm = OpdReverseJsonFormUtils.prepareJsonEditOpdRegistrationForm(detailsMap, Arrays.asList(OpdJsonFormUtils.OPENSRP_ID, OpdConstants.JSON_FORM_KEY.BHT_ID), formUtils);
         JSONObject jsonObject = new JSONObject(jsonForm);
         Assert.assertEquals(detailsMap.get(OpdJsonFormUtils.OPENSRP_ID), jsonObject.optString(OpdJsonFormUtils.CURRENT_ZEIR_ID));

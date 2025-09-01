@@ -28,7 +28,7 @@ import org.robolectric.util.ReflectionHelpers;
 import org.smartregister.Context;
 import org.smartregister.CoreLibrary;
 import org.smartregister.clientandeventmodel.Client;
-import org.smartregister.clientandeventmodel.Event;
+import org.smartregister.domain.Event;
 import org.smartregister.commonregistry.CommonPersonObjectClient;
 import org.smartregister.domain.ProfileImage;
 import org.smartregister.domain.form.FormLocation;
@@ -59,7 +59,7 @@ import java.util.Set;
 
 import id.zelory.compressor.Compressor;
 
-@PrepareForTest({OpdUtils.class, OpdLibrary.class, LocationHelper.class, VisitDao.class})
+@PrepareForTest({OpdUtils.class, OpdLibrary.class, LocationHelper.class, VisitDao.class, android.text.TextUtils.class})
 @RunWith(PowerMockRunner.class)
 public class OpdJsonFormUtilsTest {
 
@@ -72,13 +72,14 @@ public class OpdJsonFormUtilsTest {
     @Mock
     private OpdConfiguration opdConfiguration;
 
+    @Mock
+    private LocationHelper locationHelper;
+
+    
     @Captor
     private ArgumentCaptor addClientCaptor;
 
     private OpdMetadata opdMetadata;
-
-    @Mock
-    private LocationHelper locationHelper;
 
     @Mock
     private CoreLibrary coreLibrary;
@@ -95,6 +96,13 @@ public class OpdJsonFormUtilsTest {
                 , Class.class
                 , true);
         MockitoAnnotations.initMocks(this);
+        
+        // Mock TextUtils.isEmpty()
+        PowerMockito.mockStatic(android.text.TextUtils.class);
+        PowerMockito.when(android.text.TextUtils.isEmpty(Mockito.anyString())).thenAnswer(invocation -> {
+            String str = invocation.getArgument(0);
+            return str == null || str.trim().isEmpty();
+        });
     }
 
     @After
@@ -169,12 +177,14 @@ public class OpdJsonFormUtilsTest {
 
     @Test
     public void testGetFormAsJsonWithNonEmptyJsonObjectAndInjectableFields() throws Exception {
-        OpdConfiguration opdConfiguration = new OpdConfiguration.Builder(OpdRegisterQueryProviderTest.class)
-                .setOpdMetadata(opdMetadata)
-                .build();
+        // Avoid initializing the full library; stub metadata directly
+        PowerMockito.mockStatic(OpdUtils.class);
+        PowerMockito.when(OpdUtils.metadata()).thenReturn(opdMetadata);
 
-        OpdLibrary.init(PowerMockito.mock(Context.class), PowerMockito.mock(Repository.class), opdConfiguration,
-                BuildConfig.VERSION_CODE, 1);
+        // Ensure LocationHelper static is available for addRegLocHierarchyQuestions
+        ReflectionHelpers.setStaticField(LocationHelper.class, "instance", locationHelper);
+        Mockito.doReturn(new java.util.ArrayList<String>()).when(locationHelper).generateDefaultLocationHierarchy(Mockito.anyList());
+        Mockito.doReturn(new java.util.ArrayList<org.smartregister.domain.form.FormLocation>()).when(locationHelper).generateLocationHierarchyTree(Mockito.anyBoolean(), Mockito.anyList());
 
         JSONObject jsonArrayFieldsJsonObject = new JSONObject();
         jsonArrayFieldsJsonObject.put(OpdJsonFormUtils.KEY, OpdJsonFormUtils.OPENSRP_ID);
@@ -754,4 +764,3 @@ public class OpdJsonFormUtilsTest {
     }
 
 }
-

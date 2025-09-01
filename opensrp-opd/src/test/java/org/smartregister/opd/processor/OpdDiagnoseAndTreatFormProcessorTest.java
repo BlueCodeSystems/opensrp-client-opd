@@ -14,7 +14,7 @@ import org.mockito.MockitoAnnotations;
 import org.robolectric.util.ReflectionHelpers;
 import org.smartregister.Context;
 import org.smartregister.CoreLibrary;
-import org.smartregister.clientandeventmodel.Event;
+import org.smartregister.domain.Event;
 import org.smartregister.opd.BaseRobolectricUnitTest;
 import org.smartregister.opd.OpdLibrary;
 import org.smartregister.opd.repository.OpdCheckInRepository;

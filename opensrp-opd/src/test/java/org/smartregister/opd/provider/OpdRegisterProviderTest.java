@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.text.TextUtils;
 import android.widget.Button;
 
 import androidx.annotation.NonNull;
@@ -44,7 +45,7 @@ import java.util.Map;
  * Created by Ephraim Kigamba - ekigamba@ona.io on 2019-09-24
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(Utils.class)
+@PrepareForTest({Utils.class, android.text.TextUtils.class})
 public class OpdRegisterProviderTest extends BaseTest {
 
     private OpdRegisterProvider opdRegisterProvider;
@@ -84,6 +85,8 @@ public class OpdRegisterProviderTest extends BaseTest {
 
         opdRegisterProvider = new OpdRegisterProvider(context, onClickListener, paginationClickListener);
         ReflectionHelpers.setField(opdRegisterProvider, "opdRegisterProviderMetadata", opdRegisterProviderMetadata);
+        // Provide a stable OpdRegisterRowOptions to avoid null checks inside getView
+        ReflectionHelpers.setField(opdRegisterProvider, "opdRegisterRowOptions", Mockito.mock(OpdRegisterRowOptions.class));
     }
 
     @After
@@ -104,7 +107,10 @@ public class OpdRegisterProviderTest extends BaseTest {
         ReflectionHelpers.setStaticField(CoreLibrary.class, "instance", coreLibrary);
 
         PowerMockito.mockStatic(Utils.class);
+        PowerMockito.mockStatic(TextUtils.class);
         CommonPersonObjectClient client = Mockito.mock(CommonPersonObjectClient.class);
+        java.util.HashMap<String, String> colMap = new java.util.HashMap<>();
+        Mockito.doReturn(colMap).when(client).getColumnmaps();
 
         Mockito.doReturn(true)
                 .when(opdRegisterProviderMetadata)
@@ -113,15 +119,32 @@ public class OpdRegisterProviderTest extends BaseTest {
                 .when(opdRegisterProviderMetadata)
                 .getDob(Mockito.any(Map.class));
         PowerMockito.when(Utils.getDuration("2016-07-24T03:00:00.000+03:00")).thenReturn("3y 4m");
+        
+        // Mock TextUtils.isEmpty() to return false for non-null/non-empty strings, true for null/empty
+        PowerMockito.when(TextUtils.isEmpty(Mockito.anyString())).thenAnswer(invocation -> {
+            String str = invocation.getArgument(0);
+            return str == null || str.trim().isEmpty();
+        });
+        PowerMockito.when(TextUtils.isEmpty((CharSequence) null)).thenReturn(true);
 
         Resources resources = Mockito.mock(Resources.class);
         Mockito.doReturn(resources).when(context).getResources();
         Mockito.doReturn("CG").when(resources).getString(R.string.care_giver_initials);
         Mockito.doReturn("y").when(resources).getString(R.string.abbrv_years);
 
-        OpdRegisterViewHolder viewHolder = Mockito.mock(OpdRegisterViewHolder.class);
-        viewHolder.childColumn = Mockito.mock(View.class);
-        viewHolder.dueButton = Mockito.mock(Button.class);
+        // Create a spy ViewHolder with a mocked root view to avoid Android inflation under PowerMock
+        OpdRegisterViewHolder viewHolder = Mockito.spy(new OpdRegisterViewHolder(Mockito.mock(View.class)));
+        // Avoid NPEs in visibility methods invoked by provider
+        Mockito.doNothing().when(viewHolder).showCareGiverName();
+        Mockito.doNothing().when(viewHolder).removeCareGiverName();
+        Mockito.doNothing().when(viewHolder).showPersonLocation();
+        Mockito.doNothing().when(viewHolder).removePersonLocation();
+        Mockito.doNothing().when(viewHolder).showRegisterType();
+        Mockito.doNothing().when(viewHolder).hideRegisterType();
+        // Provide mocked views for click listener attachment
+        ReflectionHelpers.setField(viewHolder, "childColumn", Mockito.mock(View.class));
+        ReflectionHelpers.setField(viewHolder, "dueButton", Mockito.mock(Button.class));
+        // Resources for string lookup remain mocked above
 
         opdRegisterProvider.populatePatientColumn(client, viewHolder);
 

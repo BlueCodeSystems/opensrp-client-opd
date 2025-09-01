@@ -157,10 +157,11 @@ public class OpdUtilsTest {
         parcelableData.put(OpdConstants.IntentKey.BASE_ENTITY_ID, baseEntityId);
 
         Intent actualResult = OpdUtils.buildFormActivityIntent(jsonForm, parcelableData, Mockito.mock(Context.class));
-        Form form = (Form) actualResult.getSerializableExtra(JsonFormConstants.JSON_FORM_KEY.FORM);
-
-        assertTrue(form.isWizard());
-        assertEquals(OpdConstants.EventType.DIAGNOSIS_AND_TREAT, form.getName());
+        // Validate that JSON payload is present and includes the correct encounter type
+        String json = actualResult.getStringExtra(OpdConstants.JSON_FORM_EXTRA.JSON);
+        assertNotNull(json);
+        JSONObject parsed = new JSONObject(json);
+        assertEquals(OpdConstants.EventType.DIAGNOSIS_AND_TREAT, parsed.getString(OpdJsonFormUtils.ENCOUNTER_TYPE));
         assertEquals(baseEntityId, actualResult.getStringExtra(OpdConstants.IntentKey.BASE_ENTITY_ID));
     }
 

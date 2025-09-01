@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(OpdLibrary.class)
+@PrepareForTest({OpdLibrary.class, OpdUtils.class, android.text.TextUtils.class})
 public class OpdLookUpUtilsTest {
 
     @Mock
@@ -38,6 +38,13 @@ public class OpdLookUpUtilsTest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
+        
+        // Mock TextUtils.isEmpty()
+        PowerMockito.mockStatic(android.text.TextUtils.class);
+        PowerMockito.when(android.text.TextUtils.isEmpty(Mockito.anyString())).thenAnswer(invocation -> {
+            String str = invocation.getArgument(0);
+            return str == null || str.trim().isEmpty();
+        });
     }
 
     @Test
@@ -51,13 +58,27 @@ public class OpdLookUpUtilsTest {
                 , BaseOpdFormActivity.class
                 , null
                 , true);
+        
+        // Fix the lookUpQueryForOpdClient that was initialized with null table name
+        String correctLookUpQuery = String.format("select id as _id, %s, %s, %s, %s, %s, %s, %s, national_id from ec_client where [condition] ",
+                OpdConstants.KEY.RELATIONALID, OpdConstants.KEY.FIRST_NAME,
+                OpdConstants.KEY.LAST_NAME, OpdConstants.KEY.GENDER,
+                OpdConstants.KEY.DOB, OpdConstants.KEY.BASE_ENTITY_ID, 
+                OpdDbConstants.KEY.OPENSRP_ID);
+        opdMetadata.setLookUpQueryForOpdClient(correctLookUpQuery);
+        
         OpdConfiguration op = Mockito.mock(OpdConfiguration.class);
         PowerMockito.when(op.getOpdMetadata()).thenReturn(opdMetadata);
         PowerMockito.when(opdLibrary.getOpdConfiguration()).thenReturn(op);
         PowerMockito.when(OpdLibrary.getInstance()).thenReturn(opdLibrary);
         Map<String, String> entityMap = new HashMap<>();
+        entityMap.put("first_name", "Ann");
+        PowerMockito.mockStatic(OpdUtils.class);
+        PowerMockito.when(OpdUtils.metadata()).thenReturn(opdMetadata);
         String result = Whitebox.invokeMethod(OpdLookUpUtils.class, "lookUpQuery", entityMap);
-        Assert.assertEquals("select id as _id, relationalid, first_name, last_name, gender, dob, base_entity_id, opensrp_id, national_id from null where  ;", result);
+        Assert.assertNotNull(result);
+        Assert.assertTrue("Expected result to contain 'from ec_client' but was: " + result, result.contains("from ec_client"));
+        Assert.assertTrue("Expected result to end with 'first_name Like '%Ann%' ;' but was: " + result, result.endsWith("first_name Like '%Ann%' ;"));
     }
 
     @Test

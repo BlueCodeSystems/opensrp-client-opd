@@ -14,7 +14,7 @@ import org.powermock.reflect.Whitebox;
 import org.robolectric.util.ReflectionHelpers;
 import org.smartregister.Context;
 import org.smartregister.clientandeventmodel.Client;
-import org.smartregister.clientandeventmodel.Event;
+import org.smartregister.domain.Event;
 import org.smartregister.commonregistry.CommonPersonObject;
 import org.smartregister.commonregistry.CommonPersonObjectClient;
 import org.smartregister.commonregistry.CommonRepository;
@@ -67,6 +67,10 @@ public class OpdProfileInteractorTest extends BaseTest {
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         opdProfileInteractor = new OpdProfileInteractor(Mockito.mock(OpdProfileActivityPresenter.class));
+        // Run interactor tasks synchronously to stabilize unit tests
+        java.util.concurrent.Executor direct = Runnable::run;
+        org.smartregister.opd.utils.AppExecutors immediate = new org.smartregister.opd.utils.AppExecutors(direct, direct, direct);
+        org.robolectric.util.ReflectionHelpers.setField(opdProfileInteractor, "appExecutors", immediate);
         opdMetadata = new OpdMetadata(OpdConstants.JSON_FORM_KEY.NAME
                 , OpdDbConstants.KEY.TABLE
                 , OpdConstants.EventType.OPD_REGISTRATION

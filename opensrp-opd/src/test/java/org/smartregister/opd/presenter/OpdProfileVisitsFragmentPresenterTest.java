@@ -30,7 +30,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-import edu.emory.mathcs.backport.java.util.Collections;
+import java.util.Collections;
 
 /**
  * Created by Ephraim Kigamba - ekigamba@ona.io on 2019-12-02

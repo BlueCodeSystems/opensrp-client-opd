@@ -1,41 +1,44 @@
 package org.smartregister.opd.dao;
 
 import net.sqlcipher.MatrixCursor;
-import net.sqlcipher.database.SQLiteDatabase;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.robolectric.util.ReflectionHelpers;
+import org.smartregister.dao.AbstractDao;
 import org.smartregister.opd.domain.ProfileAction;
 import org.smartregister.opd.domain.ProfileHistory;
+import org.smartregister.opd.BaseUnitTest;
 import org.smartregister.repository.Repository;
+
+import net.sqlcipher.database.SQLiteDatabase;
 
 import java.util.List;
 import java.util.Map;
 
 import static org.mockito.Mockito.doReturn;
 
-public class VisitDaoTest extends VisitDao{
+public class VisitDaoTest extends BaseUnitTest {
 
-    @Mock
     private Repository repository;
-
-    @Mock
     private SQLiteDatabase database;
-
 
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        setRepository(repository);
+        repository = Mockito.mock(Repository.class);
+        database = Mockito.mock(SQLiteDatabase.class);
+        // Wire AbstractDao static repository used by readData/readSingleValue
+        ReflectionHelpers.setStaticField(AbstractDao.class, "repository", repository);
+        doReturn(database).when(repository).getReadableDatabase();
+        doReturn(database).when(repository).getWritableDatabase();
     }
 
     @Test
     public void testGetSavedKeysForVisit() {
-        doReturn(database).when(repository).getReadableDatabase();
         MatrixCursor matrixCursor = new MatrixCursor(new String[]{
                 "visit_details_id", "visit_id", "visit_key", "parent_code",
                 "details", "human_readable_details", "updated_at", "created_at"
@@ -45,7 +48,7 @@ public class VisitDaoTest extends VisitDao{
                 "", "Medicine, Suturing, Wound dressing, Foreign body removal", "", ""
         });
 
-        doReturn(matrixCursor).when(database).rawQuery(Mockito.any(), Mockito.any());
+        doReturn(matrixCursor).when(database).rawQuery(Mockito.anyString(), Mockito.<String[]>any());
 
         Map<String, String> values = VisitDao.getSavedKeysForVisit("85e5dd54-ba27-46b1-b5c2-uwj20sk5m6hue");
 
@@ -55,19 +58,17 @@ public class VisitDaoTest extends VisitDao{
 
     @Test
     public void testGetDateStringForId() {
-        doReturn(database).when(repository).getReadableDatabase();
         MatrixCursor matrixCursor = new MatrixCursor(new String[]{
                 "visit_details_id", "visit_id", "visit_key", "parent_code",
                 "details", "human_readable_details", "updated_at", "created_at"
         });
-
 
         matrixCursor.addRow(new Object[]{
                 "85e5dd54-ba27-46b1-b5c2-2bab06fd77e2", "7a6e450f-0b25-4e93-bf89-bd5eb58185a2", "treatment_type", "",
                 "", "Medicine, Suturing, Wound dressing, Foreign body removal", "", "1626451003565"
         });
 
-        doReturn(matrixCursor).when(database).rawQuery(Mockito.any(), Mockito.any());
+        doReturn(matrixCursor).when(database).rawQuery(Mockito.anyString(), Mockito.<String[]>any());
 
         String value = VisitDao.getDateStringForId("7a6e450f-0b25-4e93-bf89-bd5eb58185a2");
 
@@ -76,7 +77,6 @@ public class VisitDaoTest extends VisitDao{
 
     @Test
     public void testGetVisitsToday() {
-        doReturn(database).when(repository).getReadableDatabase();
         MatrixCursor matrixCursor = new MatrixCursor(new String[]{
                 "visit_id", "visit_type", "location_id", "child_location_id",
                 "visit_group", "base_entity_id", "visit_date", "form_submission_id", "updated_at",
@@ -89,7 +89,7 @@ public class VisitDaoTest extends VisitDao{
                 "1626413129010", ""
         });
 
-        doReturn(matrixCursor).when(database).rawQuery(Mockito.any(), Mockito.any());
+        doReturn(matrixCursor).when(database).rawQuery(Mockito.anyString(), Mockito.<String[]>any());
 
         Map<String, List<ProfileAction.ProfileActionVisit>> visits = VisitDao.getVisitsToday("009c16d8-e905-4ce9-a4e3-5083a0c23e31");
 
@@ -98,7 +98,6 @@ public class VisitDaoTest extends VisitDao{
 
     @Test
     public void testGetVisitHistory() {
-        doReturn(database).when(repository).getReadableDatabase();
         MatrixCursor matrixCursor = new MatrixCursor(new String[]{
                 "visit_id", "visit_type", "location_id", "child_location_id",
                 "visit_group", "base_entity_id", "visit_date", "form_submission_id", "updated_at",
@@ -111,7 +110,7 @@ public class VisitDaoTest extends VisitDao{
                 "1626413129010", ""
         });
 
-        doReturn(matrixCursor).when(database).rawQuery(Mockito.any(), Mockito.any());
+        doReturn(matrixCursor).when(database).rawQuery(Mockito.anyString(), Mockito.<String[]>any());
 
         List<ProfileHistory> history = VisitDao.getVisitHistory("009c16d8-e905-4ce9-a4e3-5083a0c23e31");
 
@@ -120,7 +119,6 @@ public class VisitDaoTest extends VisitDao{
 
     @Test
     public void testHIVStatus() {
-        doReturn(database).when(repository).getReadableDatabase();
         MatrixCursor matrixCursor = new MatrixCursor(new String[]{
                 "visit_details_id", "visit_id", "visit_key", "parent_code",
                 "details", "human_readable_details", "updated_at", "created_at"
@@ -131,11 +129,10 @@ public class VisitDaoTest extends VisitDao{
                 "", "HIV", "", "1626451003565"
         });
 
-        doReturn(matrixCursor).when(database).rawQuery(Mockito.any(), Mockito.any());
+        doReturn(matrixCursor).when(database).rawQuery(Mockito.anyString(), Mockito.<String[]>any());
 
         boolean hivStatus = VisitDao.hasPreviousHIVStatus("009c16d8-e905-4ce9-a4e3-5083a0c23e31");
 
         Assert.assertTrue(hivStatus);
     }
-
 }
