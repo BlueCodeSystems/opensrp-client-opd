@@ -1,5 +1,4 @@
 apply plugin: 'maven-publish'
-apply plugin: 'signing'
 
 // Release detection aligned with template
 def isReleaseBuild() {
@@ -79,23 +78,6 @@ afterEvaluate { project ->
                     password = getRepositoryPassword()
                 }
             }
-        }
-    }
-
-    signing {
-        useGpgCmd()
-        required {
-            def skip = project.findProperty('skipSigning')?.toString()?.toBoolean() ?: false
-            if (skip) return false
-            if (!isReleaseBuild()) return false
-            // Only require signing for remote publish tasks; allow MavenLocal without signing
-            gradle.taskGraph.allTasks.any { t ->
-                def n = t.name.toLowerCase()
-                n.contains('publish') && !n.contains('mavenlocal')
-            }
-        }
-        if (publishing.publications.findByName('maven')) {
-            sign publishing.publications.maven
         }
     }
 
