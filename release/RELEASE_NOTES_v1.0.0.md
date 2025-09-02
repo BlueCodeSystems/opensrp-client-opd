@@ -33,6 +33,11 @@ implementation 'io.github.bluecodesystems:opensrp-client-opd:1.0.0'
 - Publish to Maven Local: `./gradlew :opensrp-opd:publishToMavenLocal`
 - Zip AAR+POM+sources+javadoc: `./gradlew :opensrp-opd:packageReleaseZip` (see `opensrp-opd/build/releasePackage`)
 
+## CI (JitPack)
+- JitPack builds skip the `:sample` module to avoid `local.properties` secrets and focus on the library artifact.
+- JDK 17 is used on JitPack.
+- Build command on JitPack: `./gradlew -x test -PskipSample=true :opensrp-opd:assembleRelease :opensrp-opd:publishToMavenLocal`.
+
 ### Central (Sonatype)
 - Local Central bundle zip (manual upload):
 ```
@@ -45,4 +50,3 @@ export ORG_GRADLE_PROJECT_sonatypePassword='TOKEN_PASS'
 ./gradlew :opensrp-opd:publish -PuseGpgCmd=true -PcentralRelease=true
 ./gradlew closeAndReleaseRepository
 ```
-

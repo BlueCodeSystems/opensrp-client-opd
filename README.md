@@ -34,7 +34,7 @@ Add the module to your project as follows
  
      ...
  
-     implementation 'io.github.bluecodesystems:opensrp-client-opd:1.0.0'
+     implementation 'io.github.bluecodesystems:opensrp-client-opd:1.0.1'
  }
  ```
 

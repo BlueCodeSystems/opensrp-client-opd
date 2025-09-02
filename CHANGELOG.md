@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2025-09-02
+
+### Fixes
+- French resources: add positional formatting overrides and correct quoting to satisfy aapt2.
+- Keep `fr` resources packaged and ensure library builds without locale formatting errors.
+
+### CI
+- JitPack: publish `maven` publication to MavenLocal with `-PskipSample=true -PskipSigning=true` so consumers can resolve the artifact.
+
 ## [1.0.0] - 2025-09-02
 
 ### Breaking Changes
@@ -31,6 +40,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Chore
 - Populate missing POM settings in `gradle.properties` (name, artifactId, packaging).
 - Apply shared `maven.gradle` in `opensrp-opd` module.
+
+### CI
+- JitPack: skip `:sample` module (`-PskipSample=true`) and build only the library with JDK 17.
 
 ## [0.2.0] - 2025-09-01
 
