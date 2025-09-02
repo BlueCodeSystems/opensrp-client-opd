@@ -1,12 +1,6 @@
 jdk:
   - openjdk17
 
-before_install:
-  # Provide dummy OAuth properties to satisfy sample module defaults without committing secrets
-  - echo "oauth.client.id=jitpack-client" >> local.properties
-  - echo "oauth.client.secret=jitpack-secret" >> local.properties
-
 install:
-  # Build and publish the library to JitPack's local Maven repo; skip tests for speed/stability
-  - ./gradlew -x test :opensrp-opd:publishToMavenLocal --no-daemon --stacktrace
-
+  # Build only the library module; skip configuring/building :sample
+  - ./gradlew -x test -PskipSample=true :opensrp-opd:assembleRelease :opensrp-opd:publishToMavenLocal --no-daemon --stacktrace

@@ -2,4 +2,12 @@ plugins {
     id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
 }
 
-include ':sample', ':opensrp-opd'
+def skipSample = (startParameter?.projectProperties?.get('skipSample')?.toString()?.toBoolean() ?: false) ||
+        (System.getenv('CI_SKIP_SAMPLE')?.toBoolean() ?: false)
+
+if (!skipSample) {
+    include ':sample'
+} else {
+    println 'settings.gradle: Skipping :sample module (skipSample flag set)'
+}
+include ':opensrp-opd'
