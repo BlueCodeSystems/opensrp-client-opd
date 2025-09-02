@@ -23,8 +23,8 @@ android {
         targetSdk androidTargetSdkVersion
         versionCode Integer.parseInt(project.VERSION_CODE)
         versionName project.VERSION_NAME
-        // Only package English resources to avoid external locale formatting issues
-        resourceConfigurations += ["en"]
+        // Package English and French resources so dependent libraries can resolve them
+        resourceConfigurations = ["en", "fr"]
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         
