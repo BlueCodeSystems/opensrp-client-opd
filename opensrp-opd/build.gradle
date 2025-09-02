@@ -1,6 +1,9 @@
 apply plugin: 'com.android.library'
 apply plugin: 'maven-publish'
-apply plugin: 'signing'
+// Apply signing plugin only when explicitly enabled (e.g., for Central releases)
+if (project.findProperty('enableSigning')?.toString()?.toBoolean() == true) {
+    apply plugin: 'signing'
+}
 apply plugin: 'jacoco'
 apply plugin: 'com.github.kt3k.coveralls'
 
@@ -412,9 +415,12 @@ afterEvaluate {
 }
 
 afterEvaluate {
-    if ((project.findProperty('centralBundle')?.toString()?.toBoolean() ?: false) ||
+    // Configure signing only if the plugin is applied AND an explicit release flag is set
+    if (plugins.hasPlugin('signing') && (
+            (project.findProperty('centralBundle')?.toString()?.toBoolean() ?: false) ||
             (project.findProperty('centralRelease')?.toString()?.toBoolean() ?: false) ||
-            (project.findProperty('legacyReleasePublication')?.toString()?.toBoolean() ?: false)) {
+            (project.findProperty('legacyReleasePublication')?.toString()?.toBoolean() ?: false)
+        )) {
         signing {
         // Sign only when not publishing to Maven Local and when keys are provided
         def taskNames = gradle.startParameter.taskNames
@@ -442,6 +448,7 @@ afterEvaluate {
             useInMemoryPgpKeys(inMemKey.toString(), inMemPass.toString())
         }
 
+            // Only wire signing when explicitly releasing; avoid CI/JitPack
             sign(publishing.publications['release'])
         }
     }
