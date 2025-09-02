@@ -323,6 +323,20 @@ tasks.register("packageReleaseZip", Zip) {
     destinationDirectory.set(file("$buildDir/releasePackage"))
 }
 
+// Zip the Central bundle repository output for manual upload to portal
+tasks.register("zipCentralBundle", Zip) {
+    group = "distribution"
+    description = "Zips the Central bundle repository artifacts for manual upload"
+    dependsOn tasks.matching { it.name == 'publishReleasePublicationToCentralBundleRepository' }
+    from(layout.buildDirectory.dir("central-bundle"))
+
+    def artifactId = project.findProperty("POM_SETTING_ARTIFACT_ID") ?: project.name
+    def versionName = (project.version?.toString()) ?: (project.findProperty("VERSION_NAME") ?: "unspecified")
+    archiveBaseName.set("${artifactId}-central")
+    archiveVersion.set(versionName)
+    destinationDirectory.set(file("$buildDir/releasePackage"))
+}
+
 // Override groupId and version for this fork's publication
 group = "io.github.bluecodesystems"
 version = project.VERSION_NAME
