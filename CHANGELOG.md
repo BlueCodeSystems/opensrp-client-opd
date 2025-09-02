@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixes
 - SnakeYAML compatibility: use reflection for 1.x fallback to avoid compilation errors with Constructor(Class) usage.
+ 
+### CI/Build
+- Remove all GPG signing configuration from Gradle scripts to prevent sign tasks on CI/JitPack and simplify local builds.
 
 ## [1.0.2] - 2025-09-02
 

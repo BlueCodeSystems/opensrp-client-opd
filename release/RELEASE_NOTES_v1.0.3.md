@@ -29,12 +29,15 @@ Object ctor = ctorCtor.newInstance(YamlConfig.class);
 
 This ensures compile-time safety while maintaining runtime compatibility with both SnakeYAML 1.x and 2.x versions.
 
+### Build Pipeline
+- Removed all Gradle GPG signing configuration to ensure CI does not attempt to sign artifacts. Publishing remains functional for MavenLocal and other unsigned use cases.
+
 ## JitPack Build Notes
 
 To build this library via JitPack:
-- Use JDK 17 (set in JitPack configuration)  
-- The `-PskipSample=true` flag is configured to exclude the sample module during builds
-- All Maven artifacts are published to MavenLocal with signing disabled for CI compatibility
+- Use JDK 17 (set in JitPack configuration)
+- The `-PskipSample=true` flag excludes the sample module during builds
+- Artifacts publish to MavenLocal without any signing steps in CI
 
 ## Upgrading
 
