@@ -23,6 +23,8 @@ android {
         targetSdk androidTargetSdkVersion
         versionCode Integer.parseInt(project.VERSION_CODE)
         versionName project.VERSION_NAME
+        // Only package English resources to avoid external locale formatting issues
+        resourceConfigurations += ["en"]
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         
@@ -294,7 +296,7 @@ apply from: '../maven.gradle'
 import org.gradle.api.tasks.bundling.Zip
 
 // Zip up release AAR, POM, sources and javadoc
-tasks.register("packageReleaseZip", Zip) {
+if (!tasks.findByName("packageReleaseZip")) tasks.register("packageReleaseZip", Zip) {
     group = "distribution"
     description = "Packages release AAR, POM, sources and javadoc into a zip"
 
@@ -323,29 +325,18 @@ tasks.register("packageReleaseZip", Zip) {
     destinationDirectory.set(file("$buildDir/releasePackage"))
 }
 
-// Zip the Central bundle repository output for manual upload to portal
-tasks.register("zipCentralBundle", Zip) {
-    group = "distribution"
-    description = "Zips the Central bundle repository artifacts for manual upload"
-    dependsOn tasks.matching { it.name == 'publishReleasePublicationToCentralBundleRepository' }
-    from(layout.buildDirectory.dir("central-bundle"))
-
-    def artifactId = project.findProperty("POM_SETTING_ARTIFACT_ID") ?: project.name
-    def versionName = (project.version?.toString()) ?: (project.findProperty("VERSION_NAME") ?: "unspecified")
-    archiveBaseName.set("${artifactId}-central")
-    archiveVersion.set(versionName)
-    destinationDirectory.set(file("$buildDir/releasePackage"))
-}
-
 // Override groupId and version for this fork's publication
 group = "io.github.bluecodesystems"
 version = project.VERSION_NAME
 
 // Maven Central publishing configuration (OSSRH s01)
 afterEvaluate {
-    publishing {
-        publications {
-            create("release", MavenPublication) {
+    if ((project.findProperty('centralBundle')?.toString()?.toBoolean() ?: false) ||
+            (project.findProperty('centralRelease')?.toString()?.toBoolean() ?: false) ||
+            (project.findProperty('legacyReleasePublication')?.toString()?.toBoolean() ?: false)) {
+        publishing {
+            publications {
+                create("release", MavenPublication) {
                 def relComp = components.findByName('release') ?: components.findByName('default')
                 if (relComp != null) {
                     from relComp
@@ -397,22 +388,23 @@ afterEvaluate {
                         url.set("https://github.com/BlueCodeSystems/opensrp-client-opd")
                     }
                 }
-            }
-        }
-        repositories {
-            maven {
-                name = "OSSRH"
-                url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-                credentials {
-                    username = findProperty("ossrhUsername") as String
-                    password = findProperty("ossrhPassword") as String
                 }
             }
-            // Optional local file-based repository to create a Central-compatible bundle
-            if ((project.findProperty('centralBundle')?.toString()?.toBoolean()) == true) {
+            repositories {
                 maven {
-                    name = "CentralBundle"
-                    url = layout.buildDirectory.dir("central-bundle")
+                    name = "OSSRH"
+                    url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+                    credentials {
+                        username = findProperty("ossrhUsername") as String
+                        password = findProperty("ossrhPassword") as String
+                    }
+                }
+                // Optional local file-based repository to create a Central-compatible bundle
+                if ((project.findProperty('centralBundle')?.toString()?.toBoolean()) == true) {
+                    maven {
+                        name = "CentralBundle"
+                        url = layout.buildDirectory.dir("central-bundle")
+                    }
                 }
             }
         }
@@ -420,7 +412,10 @@ afterEvaluate {
 }
 
 afterEvaluate {
-    signing {
+    if ((project.findProperty('centralBundle')?.toString()?.toBoolean() ?: false) ||
+            (project.findProperty('centralRelease')?.toString()?.toBoolean() ?: false) ||
+            (project.findProperty('legacyReleasePublication')?.toString()?.toBoolean() ?: false)) {
+        signing {
         // Sign only when not publishing to Maven Local and when keys are provided
         def taskNames = gradle.startParameter.taskNames
         def isMavenLocal = taskNames.any { it.contains('publishToMavenLocal') }
@@ -447,7 +442,8 @@ afterEvaluate {
             useInMemoryPgpKeys(inMemKey.toString(), inMemPass.toString())
         }
 
-        sign(publishing.publications['release'])
+            sign(publishing.publications['release'])
+        }
     }
 }
 
