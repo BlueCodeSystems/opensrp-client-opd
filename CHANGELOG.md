@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2025-09-02
+
+### Fixes
+- SnakeYAML compatibility: initialize YAML loader to work with SnakeYAML 2.x and 1.x; make `readYaml` robust across versions.
+- Resources: refine French overrides to ensure positional formatting for multi-argument strings and avoid aapt2 issues.
+
 ## [1.0.1] - 2025-09-02
 
 ### Fixes

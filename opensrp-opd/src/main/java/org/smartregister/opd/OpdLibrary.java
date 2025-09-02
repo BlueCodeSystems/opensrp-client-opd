@@ -263,18 +263,65 @@ public class OpdLibrary {
     }
 
     private void initializeYamlConfigs() {
-        Constructor constructor = new Constructor(YamlConfig.class);
-        TypeDescription customTypeDescription = new TypeDescription(YamlConfig.class);
-        customTypeDescription.addPropertyParameters(YamlConfigItem.GENERIC_YAML_ITEMS, YamlConfigItem.class);
-        constructor.addTypeDescription(customTypeDescription);
-        yaml = new Yaml(constructor);
+        try {
+            // Prefer SnakeYAML 2.x APIs when available while remaining compatible with 1.x
+            // Try: new Constructor(YamlConfig.class, new LoaderOptions())
+            Class<?> loaderOptionsCls = Class.forName("org.yaml.snakeyaml.LoaderOptions");
+            Object loaderOptions = loaderOptionsCls.getDeclaredConstructor().newInstance();
+
+            try {
+                org.yaml.snakeyaml.constructor.Constructor ctor =
+                        (org.yaml.snakeyaml.constructor.Constructor)
+                                org.yaml.snakeyaml.constructor.Constructor.class
+                                        .getConstructor(Class.class, loaderOptionsCls)
+                                        .newInstance(YamlConfig.class, loaderOptions);
+
+                TypeDescription td = new TypeDescription(YamlConfig.class);
+                // Map the list element type for the 'fields' property
+                td.addPropertyParameters("fields", YamlConfigItem.class);
+                ctor.addTypeDescription(td);
+                yaml = new Yaml(ctor);
+                return;
+            } catch (NoSuchMethodException ignored) {
+                // Fallback: new Constructor(new LoaderOptions()) then describe types
+                org.yaml.snakeyaml.constructor.Constructor ctor =
+                        (org.yaml.snakeyaml.constructor.Constructor)
+                                org.yaml.snakeyaml.constructor.Constructor.class
+                                        .getConstructor(loaderOptionsCls)
+                                        .newInstance(loaderOptions);
+
+                TypeDescription td = new TypeDescription(YamlConfig.class);
+                td.addPropertyParameters("fields", YamlConfigItem.class);
+                ctor.addTypeDescription(td);
+                yaml = new Yaml(ctor);
+                return;
+            }
+        } catch (ClassNotFoundException e) {
+            // SnakeYAML 1.x: use Constructor(Class)
+            Constructor constructor = new Constructor(YamlConfig.class);
+            TypeDescription td = new TypeDescription(YamlConfig.class);
+            td.addPropertyParameters("fields", YamlConfigItem.class);
+            constructor.addTypeDescription(td);
+            yaml = new Yaml(constructor);
+        } catch (Exception e) {
+            // Absolute fallback to a default loader
+            yaml = new Yaml();
+        }
     }
 
     @NonNull
     public Iterable<Object> readYaml(@NonNull String filename) throws IOException {
-        InputStreamReader inputStreamReader = new InputStreamReader(
+        InputStreamReader reader = new InputStreamReader(
                 context.applicationContext().getAssets().open((FilePath.FOLDER.CONFIG_FOLDER_PATH + filename)));
-        return yaml.loadAll(inputStreamReader);
+        // Load each YAML document as YamlConfig to keep compatibility across SnakeYAML 1.x and 2.x
+        java.util.ArrayList<Object> docs = new java.util.ArrayList<>();
+        Yaml loader = (yaml != null) ? yaml : new Yaml();
+        while (true) {
+            YamlConfig doc = loader.loadAs(reader, YamlConfig.class);
+            if (doc == null) break;
+            docs.add(doc);
+        }
+        return docs;
     }
 
     @NonNull
