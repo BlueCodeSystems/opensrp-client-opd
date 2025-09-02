@@ -2,5 +2,5 @@ jdk:
   - openjdk17
 
 install:
-  # Build only the library module; skip configuring/building :sample
-  - ./gradlew -x test -PskipSample=true :opensrp-opd:assembleRelease :opensrp-opd:publishToMavenLocal --no-daemon --stacktrace
+  # Build and publish the library to JitPack's local Maven so consumers can resolve it; skip sample and signing
+  - ./gradlew -x test -x lint -PskipSample=true -PskipSigning=true :opensrp-opd:publishMavenPublicationToMavenLocal --no-daemon --stacktrace

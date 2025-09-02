@@ -29,7 +29,12 @@ afterEvaluate { project ->
     publishing {
         publications {
             maven(MavenPublication) {
-                from components.release
+                def relComp = components.findByName('release') ?: components.findByName('default')
+                if (relComp != null) {
+                    from relComp
+                } else if (file("$buildDir/outputs/aar/${project.name}-release.aar").exists()) {
+                    artifact("$buildDir/outputs/aar/${project.name}-release.aar")
+                }
                 artifactId = POM_SETTING_ARTIFACT_ID
 
                 pom {
@@ -80,13 +85,18 @@ afterEvaluate { project ->
     signing {
         useGpgCmd()
         required {
-            isReleaseBuild() && (
-                gradle.taskGraph.hasTask(":publish") ||
-                gradle.taskGraph.hasTask(":publishToMavenLocal") ||
-                gradle.taskGraph.allTasks.any { it.name.toLowerCase().contains('publish') }
-            )
+            def skip = project.findProperty('skipSigning')?.toString()?.toBoolean() ?: false
+            if (skip) return false
+            if (!isReleaseBuild()) return false
+            // Only require signing for remote publish tasks; allow MavenLocal without signing
+            gradle.taskGraph.allTasks.any { t ->
+                def n = t.name.toLowerCase()
+                n.contains('publish') && !n.contains('mavenlocal')
+            }
         }
-        sign publishing.publications.maven
+        if (publishing.publications.findByName('maven')) {
+            sign publishing.publications.maven
+        }
     }
 
     // This block is kept for parity with the template.
@@ -101,4 +111,3 @@ afterEvaluate { project ->
         // nexus-staging plugin not applied; skip configuration
     }
 }
-
