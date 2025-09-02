@@ -1,20 +1,12 @@
-apply plugin: 'maven'
+apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
-def sonatypeRepositoryURL
-def mavenLocalFlag = hasProperty('mavenLocal') ? mavenLocal.toBoolean() : true
-def timestampMsg = " at " + getDate()
-if (isReleaseBuild()) {
-    println 'PROCESSING MAVEN ' + (mavenLocalFlag ? 'LOCAL' : 'REMOTE') + ' RELEASE BUILD VERSION ' + project.VERSION_NAME + timestampMsg +'...'
-    sonatypeRepositoryURL = hasProperty('RELEASE_REPOSITORY_URL') ? RELEASE_REPOSITORY_URL
-            : "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
-} else {
-    println 'PROCESSING MAVEN ' + (mavenLocalFlag ? 'LOCAL' : 'REMOTE') + ' SNAPSHOT BUILD VERSION ' + project.VERSION_NAME + timestampMsg + '...'
-    sonatypeRepositoryURL = hasProperty('SNAPSHOT_REPOSITORY_URL') ? SNAPSHOT_REPOSITORY_URL
-            : "https://oss.sonatype.org/content/repositories/snapshots/"
-
+// Release detection aligned with template
+def isReleaseBuild() {
+    return !version.contains("SNAPSHOT")
 }
 
+// Credentials are expected in gradle.properties or via -P
 def getRepositoryPassword() {
     return hasProperty('sonatypePassword') ? sonatypePassword : ""
 }
@@ -23,116 +15,90 @@ def getRepositoryUsername() {
     return hasProperty('sonatypeUsername') ? sonatypeUsername : ""
 }
 
+// Enable sources/javadoc artifacts for Android release variant
+android {
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
+}
+
 afterEvaluate { project ->
-    uploadArchives {
+    publishing {
+        publications {
+            maven(MavenPublication) {
+                from components.release
+                artifactId = POM_SETTING_ARTIFACT_ID
+
+                pom {
+                    name = POM_SETTING_NAME
+                    packaging = POM_SETTING_PACKAGING
+                    description = POM_SETTING_DESCRIPTION
+                    url = POM_SETTING_URL
+
+                    scm {
+                        url = POM_SETTING_SCM_URL
+                        connection = POM_SETTING_SCM_CONNECTION
+                        developerConnection = POM_SETTING_SCM_DEV_CONNECTION
+                    }
+
+                    licenses {
+                        license {
+                            name = POM_SETTING_LICENCE_NAME
+                            url = POM_SETTING_LICENCE_URL
+                            distribution = POM_SETTING_LICENCE_DIST
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id = POM_SETTING_DEVELOPER_ID
+                            name = POM_SETTING_DEVELOPER_NAME
+                        }
+                    }
+                }
+            }
+        }
+
         repositories {
+            maven {
+                def sonatypeRepositoryURL = isReleaseBuild() ?
+                    "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/" :
+                    "https://s01.oss.sonatype.org/content/repositories/snapshots/"
 
-            if (mavenLocalFlag) {
-
-                mavenDeployer {
-
-                    pom.artifactId = POM_SETTING_ARTIFACT_ID
-
-                    repository(url: mavenLocal().url)
-
-                    pom.project {
-                        name POM_SETTING_NAME
-                        packaging POM_SETTING_PACKAGING
-                        description POM_SETTING_DESCRIPTION
-                        url POM_SETTING_URL
-
-                        scm {
-                            url POM_SETTING_SCM_URL
-                            connection POM_SETTING_SCM_CONNECTION
-                            developerConnection POM_SETTING_SCM_DEV_CONNECTION
-                        }
-
-                        licenses {
-                            license {
-                                name POM_SETTING_LICENCE_NAME
-                                url POM_SETTING_LICENCE_URL
-                                distribution POM_SETTING_LICENCE_DIST
-                            }
-                        }
-
-                        developers {
-                            developer {
-                                id POM_SETTING_DEVELOPER_ID
-                                name POM_SETTING_DEVELOPER_NAME
-                            }
-                        }
-                    }
+                url = sonatypeRepositoryURL
+                credentials {
+                    username = getRepositoryUsername()
+                    password = getRepositoryPassword()
                 }
-            } else {
-                mavenDeployer {
-                    beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-                    pom.artifactId = POM_SETTING_ARTIFACT_ID
-
-                    repository(url: sonatypeRepositoryURL) {
-                        authentication(userName: getRepositoryUsername(), password: getRepositoryPassword())
-                    }
-
-                    pom.project {
-                        name POM_SETTING_NAME
-                        packaging POM_SETTING_PACKAGING
-                        description POM_SETTING_DESCRIPTION
-                        url POM_SETTING_URL
-
-                        scm {
-                            url POM_SETTING_SCM_URL
-                            connection POM_SETTING_SCM_CONNECTION
-                            developerConnection POM_SETTING_SCM_DEV_CONNECTION
-                        }
-
-                        licenses {
-                            license {
-                                name POM_SETTING_LICENCE_NAME
-                                url POM_SETTING_LICENCE_URL
-                                distribution POM_SETTING_LICENCE_DIST
-                            }
-                        }
-
-                        developers {
-                            developer {
-                                id POM_SETTING_DEVELOPER_ID
-                                name POM_SETTING_DEVELOPER_NAME
-                            }
-                        }
-                    }
-                }
-
             }
         }
     }
 
     signing {
-        required { isReleaseBuild() && gradle.taskGraph.hasTask("uploadArchives") }
-        sign configurations.archives
+        useGpgCmd()
+        required {
+            isReleaseBuild() && (
+                gradle.taskGraph.hasTask(":publish") ||
+                gradle.taskGraph.hasTask(":publishToMavenLocal") ||
+                gradle.taskGraph.allTasks.any { it.name.toLowerCase().contains('publish') }
+            )
+        }
+        sign publishing.publications.maven
     }
 
-    task androidJavadocs(type: Javadoc) {
-    }
-
-    task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
-        classifier = 'javadoc'
-    }
-
-    task androidSourcesJar(type: Jar) {
-        classifier = 'sources'
-    }
-
-    artifacts {
-        archives androidSourcesJar
-        archives androidJavadocsJar
-    }
-
-    nexusStaging {
-        username getRepositoryUsername()
-        password getRepositoryPassword()
+    // This block is kept for parity with the template.
+    // If you use the nexus-staging plugin, configure it at the root project.
+    try {
+        nexusStaging {
+            serverUrl = "https://s01.oss.sonatype.org/service/local/"
+            username = getRepositoryUsername()
+            password = getRepositoryPassword()
+        }
+    } catch (Throwable ignored) {
+        // nexus-staging plugin not applied; skip configuration
     }
 }
 
-def getDate() {
-    return new Date().format('yyyy-MM-dd HH:mm:ss')
-}

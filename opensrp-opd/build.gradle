@@ -288,7 +288,40 @@ tasks.register("javadocJar", Jar) {
     from(layout.projectDirectory.dir("empty-javadoc"))
 }
 
-// apply from: '../maven.gradle'
+// Import reusable publishing tasks (sources/javadoc, Sonatype publishing, signing)
+apply from: '../maven.gradle'
+
+import org.gradle.api.tasks.bundling.Zip
+
+// Zip up release AAR, POM, sources and javadoc
+tasks.register("packageReleaseZip", Zip) {
+    group = "distribution"
+    description = "Packages release AAR, POM, sources and javadoc into a zip"
+
+    // Ensure artifacts exist
+    dependsOn "assembleRelease", "sourcesJar", "javadocJar", "generatePomFileForMavenPublication"
+
+    // AAR
+    from("$buildDir/outputs/aar") {
+        include "*-release.aar"
+    }
+    // POM created by maven-publish
+    from("$buildDir/publications/maven") {
+        include "pom-default.xml"
+        into("maven")
+    }
+    // Sources/javadoc jars
+    from("$buildDir/libs") {
+        include "*-sources.jar", "*-javadoc.jar"
+    }
+
+    // Name and destination
+    def artifactId = project.findProperty("POM_SETTING_ARTIFACT_ID") ?: project.name
+    def versionName = (project.version?.toString()) ?: (project.findProperty("VERSION_NAME") ?: "unspecified")
+    archiveBaseName.set(artifactId)
+    archiveVersion.set(versionName)
+    destinationDirectory.set(file("$buildDir/releasePackage"))
+}
 
 // Override groupId and version for this fork's publication
 group = "io.github.bluecodesystems"
