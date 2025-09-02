@@ -297,12 +297,20 @@ public class OpdLibrary {
                 return;
             }
         } catch (ClassNotFoundException e) {
-            // SnakeYAML 1.x: use Constructor(Class)
-            Constructor constructor = new Constructor(YamlConfig.class);
-            TypeDescription td = new TypeDescription(YamlConfig.class);
-            td.addPropertyParameters("fields", YamlConfigItem.class);
-            constructor.addTypeDescription(td);
-            yaml = new Yaml(constructor);
+            // SnakeYAML 1.x present (no LoaderOptions). Build without referencing 1.x-only ctors at compile time.
+            try {
+                Class<?> ctorCls = org.yaml.snakeyaml.constructor.Constructor.class;
+                java.lang.reflect.Constructor<?> ctorCtor = ctorCls.getConstructor(Class.class);
+                Object ctor = ctorCtor.newInstance(YamlConfig.class);
+
+                TypeDescription td = new TypeDescription(YamlConfig.class);
+                td.addPropertyParameters("fields", YamlConfigItem.class);
+                ctorCls.getMethod("addTypeDescription", TypeDescription.class).invoke(ctor, td);
+
+                yaml = new Yaml((org.yaml.snakeyaml.constructor.Constructor) ctor);
+            } catch (Exception ex) {
+                yaml = new Yaml();
+            }
         } catch (Exception e) {
             // Absolute fallback to a default loader
             yaml = new Yaml();
