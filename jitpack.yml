@@ -1,0 +1,7 @@
+jdk:
+  - openjdk17
+install:
+  - ./gradlew -PCI_SKIP_SAMPLE=true :opensrp-opd:assembleRelease -x test --no-daemon --stacktrace
+env:
+  CI: true
+  CI_SKIP_SAMPLE: true
